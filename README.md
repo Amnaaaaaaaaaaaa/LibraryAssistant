@@ -361,7 +361,10 @@ python benchmark.py --model qwen2.5:3b --runs 5
 ## 7. Bonus (optional)
 
 - [ ] Cloud deployment (Vercel/other free-tier host) — URL: *fill in if done*
-- [ ] UX/persona polish beyond Phase V — describe here if attempted
+- [ ] UX/persona polish beyond Phase V — library-themed visual design (bookshelf header,
+      favicon, warm color palette), responsive layout, and iterative
+      prompt-hardening for persona consistency under adversarial testing
+      (see docs/example_dialogues.md for jailbreak resistance testing).
 
 ---
 
