@@ -4,7 +4,6 @@
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
 <title>Riverbend Library Assistant</title>
-<link rel="icon" type="image/svg+xml" href="data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 64 64'%3E%3Crect width='64' height='64' rx='12' fill='%232f4538'/%3E%3Cpath d='M32 20c-5-4-13-5-19-3v30c6-2 14-1 19 3 5-4 13-5 19-3V17c-6-2-14-1-19 3z' fill='%23f2ede2'/%3E%3Cpath d='M32 20v30' stroke='%23c98a3e' stroke-width='2.5' fill='none'/%3E%3C/svg%3E">
 <style>
   :root {
     --ink: #1d2b25;
@@ -16,11 +15,6 @@
     --line: #d8cfb8;
     --user-bubble: #2f4538;
     --bot-bubble: #ffffff;
-    --spine-1: #8a5a3b;
-    --spine-2: #6b4226;
-    --spine-3: #9c7b4f;
-    --spine-4: #4d6b52;
-    --spine-5: #b06a4e;
   }
 
   * { box-sizing: border-box; }
@@ -28,9 +22,7 @@
   body {
     margin: 0;
     font-family: "Iowan Old Style", "Georgia", serif;
-    background:
-      radial-gradient(ellipse at top, rgba(201,138,62,0.06), transparent 55%),
-      var(--paper);
+    background: var(--paper);
     color: var(--ink);
     height: 100vh;
     display: flex;
@@ -38,64 +30,27 @@
   }
 
   header {
-    background: linear-gradient(180deg, var(--shelf) 0%, var(--shelf-dark) 100%);
+    background: var(--shelf);
     color: var(--paper);
-    padding: 16px 28px 0;
-  }
-
-  .header-top {
+    padding: 18px 28px;
     display: flex;
-    align-items: center;
-    gap: 12px;
-    padding-bottom: 14px;
+    align-items: baseline;
+    justify-content: space-between;
+    border-bottom: 4px solid var(--amber);
   }
-
-  .logo-mark {
-    width: 34px;
-    height: 34px;
-    flex-shrink: 0;
-  }
-
-  .header-text { display: flex; flex-direction: column; }
 
   header h1 {
-    font-size: 1.25rem;
+    font-size: 1.3rem;
     margin: 0;
     font-weight: 600;
     letter-spacing: 0.01em;
-    line-height: 1.15;
   }
 
   header .tag {
     font-family: "Helvetica Neue", Arial, sans-serif;
-    font-size: 0.7rem;
+    font-size: 0.75rem;
     color: var(--amber);
-    letter-spacing: 0.08em;
-  }
-
-  @media (max-width: 600px) {
-    header { padding: 12px 16px 0; }
-    .logo-mark { width: 26px; height: 26px; }
-    header h1 { font-size: 1.02rem; }
-    header .tag { font-size: 0.62rem; }
-  }
-
-  /* decorative bookshelf: a fixed-size tile of upright book "spines" that
-     repeats horizontally, so book width stays constant on any screen size
-     instead of stretching on wide viewports */
-  .shelf-row {
-    display: block;
-    width: 100%;
-    height: 40px;
-    background-image: url("data:image/svg+xml,%3Csvg%20xmlns%3D%22http%3A//www.w3.org/2000/svg%22%20width%3D%22202.9%22%20height%3D%2246%22%20viewBox%3D%220%200%20202.9%2046%22%3E%3Crect%20x%3D%220.0%22%20y%3D%2219.9%22%20width%3D%2217.6%22%20height%3D%2226.1%22%20rx%3D%221%22%20fill%3D%22%23b06a4e%22/%3E%3Crect%20x%3D%220.0%22%20y%3D%2224.6%22%20width%3D%2217.6%22%20height%3D%221.6%22%20fill%3D%22%23f2ede2%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2219.6%22%20y%3D%2218.9%22%20width%3D%2218.5%22%20height%3D%2227.1%22%20rx%3D%221%22%20fill%3D%22%23c9925f%22/%3E%3Crect%20x%3D%2219.6%22%20y%3D%2223.8%22%20width%3D%2218.5%22%20height%3D%221.6%22%20fill%3D%22%23f2ede2%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2240.1%22%20y%3D%224.2%22%20width%3D%2221.4%22%20height%3D%2241.8%22%20rx%3D%221%22%20fill%3D%22%238a5a3b%22/%3E%3Crect%20x%3D%2240.1%22%20y%3D%2211.7%22%20width%3D%2221.4%22%20height%3D%221.6%22%20fill%3D%22%23f2ede2%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2263.5%22%20y%3D%228.9%22%20width%3D%2217.7%22%20height%3D%2237.1%22%20rx%3D%221%22%20fill%3D%22%23a8763e%22/%3E%3Crect%20x%3D%2263.5%22%20y%3D%2215.6%22%20width%3D%2217.7%22%20height%3D%221.6%22%20fill%3D%22%23f2ede2%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%2283.2%22%20y%3D%220.8%22%20width%3D%2218.1%22%20height%3D%2245.2%22%20rx%3D%221%22%20fill%3D%22%233f5a4a%22/%3E%3Crect%20x%3D%2283.2%22%20y%3D%228.9%22%20width%3D%2218.1%22%20height%3D%221.6%22%20fill%3D%22%23f2ede2%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%22103.3%22%20y%3D%227.7%22%20width%3D%2218.7%22%20height%3D%2238.3%22%20rx%3D%221%22%20fill%3D%22%233f5a4a%22/%3E%3Crect%20x%3D%22103.3%22%20y%3D%2214.6%22%20width%3D%2218.7%22%20height%3D%221.6%22%20fill%3D%22%23f2ede2%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%22124.0%22%20y%3D%2221.7%22%20width%3D%2215.5%22%20height%3D%2224.3%22%20rx%3D%221%22%20fill%3D%22%23c9925f%22/%3E%3Crect%20x%3D%22124.0%22%20y%3D%2226.1%22%20width%3D%2215.5%22%20height%3D%221.6%22%20fill%3D%22%23f2ede2%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%22141.5%22%20y%3D%2220.6%22%20width%3D%2218.1%22%20height%3D%2225.4%22%20rx%3D%221%22%20fill%3D%22%238a5a3b%22/%3E%3Crect%20x%3D%22141.5%22%20y%3D%2225.2%22%20width%3D%2218.1%22%20height%3D%221.6%22%20fill%3D%22%23f2ede2%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%22161.6%22%20y%3D%2217.8%22%20width%3D%2219.0%22%20height%3D%2228.2%22%20rx%3D%221%22%20fill%3D%22%234d6b52%22/%3E%3Crect%20x%3D%22161.6%22%20y%3D%2222.9%22%20width%3D%2219.0%22%20height%3D%221.6%22%20fill%3D%22%23f2ede2%22%20opacity%3D%220.35%22/%3E%3Crect%20x%3D%22182.6%22%20y%3D%228.8%22%20width%3D%2220.3%22%20height%3D%2237.2%22%20rx%3D%221%22%20fill%3D%22%235c4a3a%22/%3E%3Crect%20x%3D%22182.6%22%20y%3D%2215.5%22%20width%3D%2220.3%22%20height%3D%221.6%22%20fill%3D%22%23f2ede2%22%20opacity%3D%220.35%22/%3E%3C/svg%3E");
-    background-repeat: repeat-x;
-    background-position: left bottom;
-    background-size: auto 40px;
-    border-bottom: 3px solid var(--amber);
-  }
-
-  @media (max-width: 600px) {
-    .shelf-row { height: 30px; background-size: auto 30px; }
+    letter-spacing: 0.03em;
   }
 
   #status-bar {
@@ -107,12 +62,14 @@
     display: flex;
     justify-content: space-between;
     align-items: center;
-    gap: 8px;
-    flex-wrap: wrap;
+    gap: 12px;
   }
 
-  @media (max-width: 600px) {
-    #status-bar { padding: 6px 16px; font-size: 0.68rem; }
+  #session-label {
+    flex: 1;
+    text-align: center;
+    color: #9aa89c;
+    font-variant-numeric: tabular-nums;
   }
 
   #status-bar button {
@@ -141,20 +98,6 @@
     #chat { padding: 18px 6%; }
   }
 
-  #empty-state {
-    margin: auto;
-    text-align: center;
-    color: #8a9188;
-    max-width: 360px;
-  }
-  #empty-state svg { width: 40px; height: 40px; margin-bottom: 10px; opacity: 0.7; }
-  #empty-state p { margin: 4px 0; font-size: 0.92rem; }
-  #empty-state .hint {
-    font-family: "Helvetica Neue", Arial, sans-serif;
-    font-size: 0.72rem;
-    color: #a8ac9e;
-  }
-
   .msg {
     max-width: 72%;
     padding: 12px 16px;
@@ -162,11 +105,6 @@
     line-height: 1.5;
     font-size: 0.98rem;
     white-space: pre-wrap;
-    box-shadow: 0 1px 2px rgba(29,43,37,0.06);
-  }
-
-  @media (max-width: 600px) {
-    .msg { max-width: 88%; font-size: 0.92rem; padding: 10px 13px; }
   }
 
   .msg.user {
@@ -222,7 +160,7 @@
     background: #fff;
   }
 
-  #composer input:focus-visible { outline: 2px solid var(--amber); outline-offset: 1px; }
+  #composer input:focus { outline: 2px solid var(--amber); outline-offset: 1px; }
 
   #composer button {
     background: var(--amber);
@@ -238,7 +176,6 @@
 
   #composer button:disabled { background: #cbb99b; cursor: not-allowed; }
   #composer button:not(:disabled):hover { background: var(--amber-dark); }
-  #composer button:focus-visible { outline: 2px solid var(--shelf); outline-offset: 2px; }
 
   .cursor {
     display: inline-block;
@@ -250,47 +187,26 @@
     animation: blink 1s step-start infinite;
   }
   @keyframes blink { 50% { opacity: 0; } }
-
-  @media (prefers-reduced-motion: reduce) {
-    .cursor { animation: none; }
-  }
 </style>
 </head>
 <body>
 
 <header>
-  <div class="header-top">
-    <svg class="logo-mark" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-      <path d="M32 20c-5-4-13-5-19-3v30c6-2 14-1 19 3 5-4 13-5 19-3V17c-6-2-14-1-19 3z" fill="#f2ede2"/>
-      <path d="M32 20v30" stroke="#c98a3e" stroke-width="2.5" fill="none"/>
-    </svg>
-    <div class="header-text">
-      <h1>Riverbend Community Library</h1>
-      <span class="tag">LIBRARY ASSISTANT</span>
-    </div>
-  </div>
-  <div class="shelf-row" aria-hidden="true"></div>
+  <h1>Riverbend Community Library</h1>
+  <span class="tag">ASSISTANT</span>
 </header>
 
 <div id="status-bar">
   <span id="conn-status">Connecting…</span>
+  <span id="session-label"></span>
   <button id="reset-btn">New session</button>
 </div>
 
-<div id="chat">
-  <div id="empty-state">
-    <svg viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
-      <path d="M32 20c-5-4-13-5-19-3v30c6-2 14-1 19 3 5-4 13-5 19-3V17c-6-2-14-1-19 3z" fill="none" stroke="#8a9188" stroke-width="2"/>
-      <path d="M32 20v30" stroke="#8a9188" stroke-width="2"/>
-    </svg>
-    <p>Welcome to Riverbend Community Library.</p>
-    <p class="hint">Ask about hours, borrowing a book, holds, or your membership.</p>
-  </div>
-</div>
+<div id="chat"></div>
 
 <form id="composer">
   <input id="input" type="text" placeholder="Ask about books, loans, holds, or hours…" autocomplete="off" />
-  <button id="send-btn" type="submit">Send</button>
+  <button id="send-btn" type="submit" disabled>Send</button>
 </form>
 
 <script>
@@ -307,15 +223,27 @@ const chatEl = document.getElementById("chat");
 const inputEl = document.getElementById("input");
 const sendBtn = document.getElementById("send-btn");
 const statusEl = document.getElementById("conn-status");
+const sessionEl = document.getElementById("session-label");
 const resetBtn = document.getElementById("reset-btn");
 
-function clearEmptyState() {
-  const empty = document.getElementById("empty-state");
-  if (empty) empty.remove();
+const WELCOME =
+  "Welcome to Riverbend Community Library. I can help with the catalogue, loans and renewals, holds, fines, hours, and memberships. What can I help you with today?";
+
+function setSessionLabel(id) {
+  if (!id) {
+    sessionEl.textContent = "";
+    return;
+  }
+  sessionEl.textContent = "session " + id.slice(0, 8);
+}
+
+function ensureWelcome() {
+  if (chatEl.children.length === 0) {
+    addMessage("bot", WELCOME);
+  }
 }
 
 function addMessage(role, text) {
-  clearEmptyState();
   const div = document.createElement("div");
   div.className = "msg " + role;
   div.textContent = text;
@@ -337,6 +265,8 @@ function connect() {
   ws.onopen = () => {
     statusEl.textContent = "Connected";
     sendBtn.disabled = false;
+    setSessionLabel(sessionId);
+    ensureWelcome();
   };
 
   ws.onclose = () => {
@@ -360,6 +290,7 @@ function connect() {
     if (data.type === "session") {
       sessionId = data.session_id;
       localStorage.setItem("library_session_id", sessionId);
+      setSessionLabel(sessionId);
     } else if (data.type === "token") {
       if (!currentBotBubble) {
         currentBotBubble = addMessage("bot", "");
@@ -406,6 +337,7 @@ resetBtn.addEventListener("click", async () => {
       const data = await res.json();
       sessionId = data.session_id;
       localStorage.setItem("library_session_id", sessionId);
+      setSessionLabel(sessionId);
     } catch (e) {
       console.error("Reset failed", e);
     }
