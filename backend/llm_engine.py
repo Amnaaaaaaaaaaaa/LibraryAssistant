@@ -17,7 +17,7 @@ import httpx
 from typing import AsyncGenerator, List, Dict
 
 OLLAMA_URL = "http://localhost:11434/api/chat"
-MODEL_NAME = "qwen2.5:3b"   # change to whatever CPU-friendly model you pulled
+MODEL_NAME = "qwen2.5:1.5b"  # 0.5B–4B range; Q4 via Ollama; sized for 8 GB CPU laptops
 REQUEST_TIMEOUT = 120.0
 
 

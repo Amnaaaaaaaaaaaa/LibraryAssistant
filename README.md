@@ -1,117 +1,72 @@
 # Riverbend Library Assistant
 
-A fully local, CPU-only conversational AI assistant for a community
-library, built for Assignment 1. No cloud model APIs, no tools, no RAG —
-all behaviour comes from prompt orchestration and conversational memory
-over a locally-run quantized LLM.
+NLP Assignment 1 — Conversational AI (local CPU LLM, no tools, no RAG)
+
+**Domain:** Library Assistant  
+**Group of two:**
+
+- Fizza Ali — 22i-8787
+- Amna Malik — 22i-2715
+
+A fully local, CPU-only conversational assistant for a community library.
+No cloud model APIs, no tools, and no RAG — every reply comes from prompt
+orchestration and conversational memory over a locally run quantized LLM.
 
 ---
 
 ## 1. Use Case Description
 
-Riverbend Community Library wants a chatbot on its website that helps
-patrons **search the catalogue, understand borrowing/renewal policies,
-place holds, check due dates and fines, and learn library hours and
-membership tiers** — without needing to call or visit the front desk for
-routine questions. The assistant stays strictly inside these library
-topics; it declines anything else (weather, general trivia, coding help,
-etc.) and steers the conversation back.
+Riverbend Community Library wants a chatbot on its website so patrons can
+handle routine questions without calling or visiting the front desk.
 
-### Conversation Flow Design
+**In scope (library services only):**
 
-The assistant tracks five stages internally (encoded in its system
-prompt, not enforced by external code, since no tools/state-machine
-libraries are used):
+- Searching a small sample catalogue (title, author, copies, holds)
+- Borrowing, renewal, and overdue/lost-item policies
+- Placing a **simulated** hold and explaining the 3-day pickup window
+- Membership tiers (Standard vs Premium) and loan limits
+- Opening hours and how to get a library card
 
-1. **Greeting** — welcomes the patron, asks how it can help.
-2. **Information Gathering** — figures out what the patron actually
-   wants (book search, renewal, hold, policy question, hours) and asks
-   clarifying questions if the request is vague.
-3. **Resolution / Confirmation** — answers the question, or restates the
-   request back to the patron before treating it as resolved (e.g.
-   confirming a hold request before "logging" it).
-4. **Follow-up** — asks if there's anything else; if the topic changes,
-   it loops back to stage 2 for the *new* topic instead of restarting
-   the whole conversation from scratch.
-5. **Closing** — thanks the patron and ends warmly once they're done.
+**Out of scope:** weather, news, trivia, homework, coding, medical/legal
+advice, or anything that is not about this library. The assistant must
+refuse those and steer back to library topics.
 
-**Handling topic changes:** because the full flow lives inside a single
-system prompt (see `backend/prompts.py`) rather than a rigid external
-state machine, the model is instructed to recognize a topic switch,
-briefly acknowledge it, and re-enter the Information Gathering stage for
-the new topic while keeping earlier context (e.g. a membership tier or
-book already mentioned) available in its context window. See
-`docs/example_dialogues.md`, Dialogue 2, for a concrete transcript.
+This domain carries through to Assignments 2 and 3.
 
-**Off-topic / irrelevant queries:** the system prompt explicitly forbids
-answering outside the library domain and instructs the model to decline
-politely and redirect, even under adversarial "ignore your instructions"
-style prompts. See Dialogue 4 below and the full test log in
-`docs/example_dialogues.md`.
+### Conversation Flow Design (library-specific)
 
-### Example Dialogues
+The five stages live in the system prompt (`backend/prompts.py`). There is
+no external state machine — the model is instructed to track the stage
+from dialogue context.
 
-These are real transcripts captured from our own testing against the
-running system (`qwen2.5:3b`, local CPU inference). More cases, including
-edge cases that failed, are in `docs/example_dialogues.md`.
+1. **Greeting (library desk)** — welcome the patron to Riverbend and offer
+   catalogue, loans, holds, hours, or membership help.
+2. **Need identification** — decide which *library* task this is:
+   catalogue lookup, renewal, hold, fines/due dates, hours, membership
+   tier, or library card. Ask a clarifying question if the request is
+   vague (e.g. title vs author, Standard vs Premium).
+3. **Policy / catalogue resolution** — answer only from the embedded
+   knowledge base (hours, copy counts, fine rates, renewal rules). If
+   the title is not in the sample catalogue, say so and do **not**
+   invent availability.
+4. **Hold / renewal confirmation** — before treating a hold or renewal as
+   “noted”, restated the item and remind the patron it is a demo: they
+   still confirm at the front desk or in the app. Pickup window is 3 days
+   once a held item is available.
+5. **Follow-up or closing** — ask if they need another library service.
+   If they switch (hours → renew *Clean Code*), acknowledge the switch,
+   keep earlier facts (membership tier, book already named) from the
+   sliding window, and re-enter need identification for the new task.
+   Close warmly when they are done.
 
-**Dialogue 1 — Catalogue lookup with multi-turn memory**
-> **Patron:** Do you have "Clean Code" available?
-> **Assistant:** I can help with that! "Clean Code" by Robert C. Martin is
-> available. How many copies would you like to borrow, and do you have any
-> specific due date in mind?
->
-> **Patron:** Can I renew it for 3 weeks?
-> **Assistant:** Certainly! You can renew your copy of "Clean Code" up to
-> 2 days before the due date. How many items would you like to renew, and
-> do you have any specific due date in mind?
+**Topic change:** a patron can move from Sunday hours to renewing
+*Clean Code* in the next turn. The assistant must not restart from a
+generic greeting; it keeps Riverbend context and the named title.
 
-*(Note: the assistant correctly resolved "it" to "Clean Code" from the
-previous turn without the title being repeated - see the Context Memory
-Management Scheme above for how this is implemented.)*
-
-**Dialogue 2 — Topic switch mid-conversation**
-> **Patron:** What are your library hours?
-> **Assistant:** Our library hours are Mon-Fri 9:00-20:00, Sat 10:00-17:00,
-> and we're closed on Sun. How can I assist you further with your library
-> questions today?
->
-> **Patron:** Actually, can I place a hold on "The Silent Patient"?
-> **Assistant:** Of course! How many copies of "The Silent Patient" are
-> you interested in, and on what date would you like to receive it?
-
-**Dialogue 3 — Full flow: vague request → confirmation → closing**
-> **Patron:** I need a book
-> **Assistant:** Sure, I can help you with that! What is the title of the
-> book you're looking for?
->
-> **Patron:** I'd like to place a hold on "The Silent Patient"
-> **Assistant:** Of course! How many copies of "The Silent Patient" are
-> you interested in, and on what date would you like to receive it?
->
-> **Patron:** 2 copies and 15th sept
-> **Assistant:** Great! I've noted a hold request for "The Silent Patient".
-> You'll receive it on the 15th of September. How else can I assist you
-> today?
->
-> **Patron:** No that's all, thanks
-> **Assistant:** You're welcome! If you need any more assistance in the
-> future, please don't hesitate to ask. Have a great day!
-
-**Dialogue 4 — Off-topic refusal**
-> **Patron:** How's the weather today?
-> **Assistant:** I'm just the Riverbend Library assistant, so I can't help
-> with weather. Is there something about books, hours, or loans I can
-> assist you with?
->
-> **Patron:** What's the capital of France?
-> **Assistant:** That's outside what I can help with here - I'm only set
-> up for Riverbend Library questions. Can I help you find a book or check
-> a due date instead?
-
-Full transcripts and the complete pass/fail test matrix (including
-adversarial jailbreak attempts and failure-handling tests):
-**[`docs/example_dialogues.md`](docs/example_dialogues.md)**
+**Irrelevant queries:** refuse immediately (no partial answer), then
+offer a library alternative. Jailbreak / “ignore your instructions”
+prompts are treated the same way. See Dialogue 3 in
+[`docs/example_dialogues.md`](docs/example_dialogues.md).
 
 ---
 
@@ -140,231 +95,206 @@ adversarial jailbreak attempts and failure-handling tests):
                                                                          │ localhost:11434
                                                                 ┌────────▼─────────┐
                                                                 │  Ollama (local)   │
-                                                                │  qwen2.5:3b-q4    │
+                                                                │  qwen2.5:1.5b     │
                                                                 │  CPU inference    │
                                                                 └───────────────────┘
 ```
 
 **Data flow per turn:**
-1. Browser sends `{"session_id", "message"}` over the WebSocket.
-2. `ConversationManager` appends the user turn to that session's history
-   and builds the prompt: `[static system prompt] + [sliding window of
-   recent turns]`.
-3. `llm_engine.stream_chat()` POSTs to Ollama's `/api/chat` with
-   `stream: true` and yields tokens as they arrive.
-4. The backend forwards each token to the browser immediately
-   (`{"type": "token", ...}`), then a final `{"type": "done", ...}` with
-   TTFT and tokens/sec for that turn.
-5. The full assistant reply is appended back into session history.
 
-No RAG, no external tools/function-calling, no cloud APIs anywhere in
-this path — the model's only "knowledge" is what's written directly into
-`backend/prompts.py`.
+1. Browser sends `{"session_id", "message"}` over the WebSocket.
+2. `ConversationManager` appends the user turn and builds
+   `[system prompt] + [sliding window of recent turns]`.
+3. `llm_engine.stream_chat()` POSTs to Ollama `/api/chat` with
+   `stream: true`.
+4. The backend forwards each token (`{"type": "token"}`), then
+   `{"type": "done", "ttft", "tokens_per_sec"}`.
+5. The full assistant reply is stored on the session.
+
+No RAG, no function calling, no cloud APIs. Catalogue and policy text
+are static inside `backend/prompts.py`.
+
+### API
+
+| Method | Path | Purpose |
+|---|---|---|
+| `GET` | `/health` | Liveness (`{"status": "ok"}`) |
+| `POST` | `/session/new` | Create a session; returns `{session_id}` |
+| `POST` | `/session/{id}/reset` | Wipe that session’s history |
+| `WS` | `/ws/chat` | Streaming chat |
+
+**WebSocket client → server**
+
+```json
+{"session_id": "<uuid or empty>", "message": "<patron text>"}
+```
+
+**Server → client** (one or more per turn)
+
+```json
+{"type": "session", "session_id": "<uuid>"}
+{"type": "token", "content": "<partial text>"}
+{"type": "done", "content": "<full text>", "ttft": 0.0, "tokens_per_sec": 0.0}
+{"type": "error", "content": "<message>"}
+```
+
+Malformed JSON, a missing `message` field, or an empty message return
+`type: error` and **keep the socket open**. A downed Ollama process
+returns a connection error instead of crashing the API.
+
+Each WebSocket is its own asyncio task, so accepting and reading from
+user A does not block user B. Ollama itself typically generates one
+sequence at a time; that queueing is documented under Limitations.
 
 ---
 
 ## 3. Model Selection
 
-**Model:** `qwen2.5:3b` (Q4_K_M quantization via Ollama)
+**Model:** `qwen2.5:1.5b` (Q4 quantization via Ollama)
 
-**Why this model:** we started with `qwen2.5:1.5b` since it's the
-smallest, fastest option in the assignment's required range, but testing
-showed it struggled to reliably follow the domain-restriction and
-anti-jailbreak instructions in the system prompt (it would sometimes
-answer off-topic questions or comply with "ignore your instructions"
-style prompts). Moving up to `qwen2.5:3b` noticeably improved instruction
-adherence in our manual testing (see `docs/example_dialogues.md`) while
-still running acceptably on CPU, so we kept it as the final choice.
+**Why this model:**
 
-- Falls inside the assignment's required 0.5B–4B parameter range.
-- Instruction-tuned out of the box, and large enough to follow the
-  structured system prompt (stages, domain policies, refusal behaviour)
-  more reliably than the 1.5B variant, without needing GPU or fine-tuning.
-- Ollama makes pulling/running it a one-line operation, which matches
-  the assignment's suggested tooling.
+- Inside the assignment’s 0.5B–4B range.
+- Instruction-tuned, so it follows the library system prompt (stages,
+  catalogue facts, refusals) without fine-tuning.
+- Fits an 8 GB CPU laptop (this submission machine is an HP ZBook
+  Firefly 14 G7, Intel i5-10310U, 8 GB RAM). A 3B model is allowed by
+  the spec but is tighter on this RAM budget and slower for a live viva.
+- Ollama makes pull + serve a one-line local setup; no cloud APIs.
 
-> If your hardware struggles with `qwen2.5:3b`, drop to `qwen2.5:1.5b`
-> or `qwen2.5:0.5b` for speed, accepting weaker instruction-following as
-> a trade-off - just update `MODEL_NAME` in `backend/llm_engine.py` and
-> re-pull with `ollama pull <model>`.
+`MODEL_NAME` in `backend/llm_engine.py` and the default in
+`backend/benchmark.py` are both `qwen2.5:1.5b`.
 
 ### Context Memory Management Scheme
 
-- The `ConversationManager` (`backend/conversation_manager.py`) keeps the
-  **full transcript** in memory for the life of a session, so the UI can
-  always show the complete history.
-- When building the actual prompt sent to the model, it uses a
-  **sliding window of the last `MAX_TURNS` (default 6) user/assistant
-  turn pairs**, plus the system prompt, which is always included in full
-  and never trimmed.
-- Each stored message is hard-capped at `MAX_CHARS_PER_MSG` (2000 chars)
-  as a safety limit against a single very long message blowing up the
-  prompt size.
-- This keeps the prompt (and therefore latency) roughly constant as a
-  conversation grows long, while retaining enough recent context for
-  coherent multi-turn dialogue (e.g. remembering a book mentioned two
-  turns ago). The trade-off, documented under Limitations, is that very
-  early context (older than `MAX_TURNS`) is dropped rather than
-  summarized.
+- **Full transcript** stays in server RAM for the life of the session
+  (the UI can show every bubble).
+- **Prompt sent to the model** is a sliding window of the last
+  `MAX_TURNS` (6) user/assistant **pairs**, plus the system prompt,
+  which is never trimmed.
+- Each stored message is capped at `MAX_CHARS_PER_MSG` (2000) so one
+  huge paste cannot blow the context.
+- Older turns are dropped, not summarized. Latency stays roughly
+  constant; very early details (e.g. a book named 8+ turns ago) can
+  fall out of the window.
 
 ---
 
 ## 4. Latency Benchmarks
 
-Run `backend/benchmark.py` after starting `ollama serve` and pulling your
-model, then paste your actual results here:
+Measured on this laptop with `python benchmark.py --model qwen2.5:1.5b --runs 5`
+after `ollama serve` and a pulled `qwen2.5:1.5b`. Numbers are from the
+script output, not estimates.
 
-```
-python benchmark.py --model qwen2.5:3b --runs 5
+```powershell
+cd backend
+.\venv\Scripts\python.exe benchmark.py --model qwen2.5:1.5b --runs 5
 ```
 
 | Metric | Value |
 |---|---|
-| Hardware (CPU, RAM) | Intel Core i7-8650U @ 1.90GHz (4 cores / 8 logical processors), 16GB DDR4 RAM |
-| Model | qwen2.5:3b (Q4_K_M) |
-| Avg. time-to-first-token (TTFT) | 1.043s |
-| Avg. total response time | 8.802s |
-| Avg. tokens/second | 5.76 |
-| Concurrent sessions tested | 2 browser tabs tested simultaneously with different queries in each - sessions remained correctly isolated (no cross-talk of history between tabs), confirming per-session state works as designed |
+| Hardware (CPU, RAM) | Intel Core i5-10310U (4 cores / 8 threads), 8 GB RAM, HP ZBook Firefly 14 G7 |
+| Model | qwen2.5:1.5b (Q4 via Ollama) |
+| Avg. time-to-first-token (TTFT) | **0.932 s** |
+| Avg. total response time | **7.791 s** |
+| Avg. tokens/second | **11.18** |
+| Concurrent sessions tested | FastAPI accepts several WebSockets at once; Ollama generates **one** sequence at a time, so extra chats queue. First UI turn after a cold model load showed TTFT **56.1 s** (load), then warmed to ~1 s. |
 
-Per-run detail from the benchmark script:
+Per-run log:
 
-| Run | Prompt | TTFT (s) | Total (s) | Tokens/sec |
+| Run | Prompt (short) | TTFT | Total | tok/s |
 |---|---|---|---|---|
-| 1 | "Hi, what are your library hours?" | 1.176 | 7.808 | 5.64 |
-| 2 | "Do you have 'Atomic Habits' available right now?" | 0.996 | 7.317 | 5.74 |
-| 3 | "Can I renew 'Clean Code' if no one else has it on hold?" | 1.025 | 9.705 | 5.87 |
-| 4 | "What's the overdue fine if I return a book 4 days late?" | 1.133 | 7.585 | 5.27 |
-| 5 | "I'd like to place a hold on 'The Silent Patient'." | 0.882 | 11.596 | 6.30 |
-
-**Note on the model's first-ever response after a fresh `ollama serve`
-start:** we observed a cold-start effect where the very first chat turn
-in a brand-new session took 10-40s TTFT (the model weights being loaded
-into RAM for the first time), while all subsequent turns settled to the
-~1s TTFT / ~5.8 tokens/sec shown above. This is a one-time cost per
-Ollama server start, not per session, and is worth mentioning live in
-the viva if the first demo message looks slow.
-
-**System memory pressure also affected latency in our testing:** our
-16GB machine frequently had only ~1-2GB of RAM actually free at any given
-moment (the rest in use by background applications), and on at least one
-occasion this pushed a single response's TTFT as high as ~90s instead of
-the usual 10-40s cold-start range. Closing unnecessary background
-applications before running Ollama noticeably improved consistency. This
-is a hardware/OS-level constraint rather than an issue with the
-conversation manager or backend code, but it is worth demonstrating with
-a "clean" machine state during the live viva if possible.
-
-> The benchmark script's numbers are the ones you should paste here —
-> don't estimate. Also report what changes when 2–3 chats run at once
-> (Ollama serializes generation per model instance by default, so total
-> response time per user will increase under concurrent load — measure
-> and report this honestly).
+| 1 | library hours | 1.443 s | 4.394 s | 8.65 |
+| 2 | Atomic Habits availability | 0.715 s | 5.628 s | 11.02 |
+| 3 | renew Clean Code | 0.879 s | 4.552 s | 10.76 |
+| 4 | overdue fine, 4 days | 0.791 s | 16.338 s | 12.79 |
+| 5 | hold Silent Patient | 0.832 s | 8.042 s | 12.68 |
 
 ---
 
 ## 5. Setup Instructions
 
 ### Prerequisites
-- Python 3.10+
-- [Ollama](https://ollama.com) installed locally
 
-### Steps
+- Windows 10/11, Python 3.10+
+- [Ollama](https://ollama.com/download) installed (adds `ollama` to PATH)
 
-```bash
-# 1. Install and start Ollama
-ollama serve            # keep this running in its own terminal
+### Steps (Windows PowerShell)
 
-# 2. Pull the model (in another terminal)
-ollama pull qwen2.5:3b
+```powershell
+# 1. Install Ollama from https://ollama.com/download if `ollama` is not
+#    recognized. Then start the server (leave this window open):
+ollama serve
 
-# 3. Set up the backend
+# 2. In a second terminal, pull the model used by this repo:
+ollama pull qwen2.5:1.5b
+
+# 3. Backend
 cd backend
 python -m venv venv
-source venv/bin/activate     # Windows: venv\Scripts\activate
+.\venv\Scripts\Activate.ps1
+# If that is blocked: Set-ExecutionPolicy -Scope Process -ExecutionPolicy Bypass
 pip install -r requirements.txt
 
-# 4. Run the API server
+# 4. API
 uvicorn main:app --reload --port 8000
-
-# 5. Open the frontend
-# Serve it with a local static server (opening the file directly with
-# file:// will block the WebSocket connection in most browsers):
-#   cd frontend && python -m http.server 5500
-# then visit http://localhost:5500
 ```
 
-Health check: `curl http://localhost:8000/health` should return
-`{"status": "ok"}`.
+Open `frontend/index.html` in a browser (double-click). It connects to
+`ws://localhost:8000/ws/chat`.
 
-### Running the benchmark
-```bash
+Health check: `http://localhost:8000/health` → `{"status": "ok"}`.
+
+### Benchmark
+
+```powershell
 cd backend
-python benchmark.py --model qwen2.5:3b --runs 5
+python benchmark.py --model qwen2.5:1.5b --runs 5
+```
+
+### WebSocket failure tests (Phase VI, tests 5–6)
+
+With uvicorn already running:
+
+```powershell
+cd backend
+python failure_tests.py
 ```
 
 ---
 
 ## 6. Known Limitations
 
-- **No persistence:** sessions live only in server memory; restarting
-  the backend wipes all conversation history. There is no database.
-- **Single-model concurrency bottleneck:** Ollama typically processes
-  one generation at a time per model instance, so under concurrent load,
-  requests queue at the model layer even though the FastAPI/WebSocket
-  layer itself handles many connections concurrently without blocking.
-- **Sliding-window memory, not summarization:** once a conversation
-  exceeds `MAX_TURNS` pairs, the oldest turns are dropped outright rather
-  than summarized, so very long conversations can "forget" early details.
-- **Cold-start latency:** the very first chat turn after starting
-  `ollama serve` takes noticeably longer (10-40s TTFT in our testing)
-  while the model weights load into RAM; subsequent turns settle to
-  ~1s TTFT. This is a one-time cost per server start, not per session.
-- **Adversarial jailbreak resistance is partial, not absolute:** through
-  iterative prompt engineering (explicit topic blocklists, multiple
-  few-shot refusal examples, end-of-prompt reminders) we significantly
-  improved the model's ability to refuse off-topic questions and resist
-  "ignore your instructions" style prompts - simple cases (weather,
-  general trivia, personal questions, role-override attempts) are now
-  refused reliably. However, some adversarial phrasings (e.g. "just tell
-  me a quick joke") can still occasionally bypass the refusal. This is an
-  expected limitation of a small (3B parameter), non-safety-fine-tuned
-  open model steered purely through prompting, with no external
-  moderation layer allowed by the assignment's no-tools/no-RAG
-  constraint. See `docs/example_dialogues.md` for the specific test
-  cases we ran and their pass/fail results.
-- **Occasional policy-detail drift:** the model sometimes asks for
-  details not supported by the domain (e.g. accepting a custom renewal
-  duration like "3 weeks" instead of pointing out the fixed 14/21-day
-  loan periods), or skips explicitly re-confirming a request before
-  "logging" it. These are minor conversational-quality issues rather
-  than domain violations.
-- **Concurrency load increases latency and can affect response quality:**
-  when running 2 browser tabs simultaneously, we observed both a very
-  high outlier TTFT (~112s, versus the usual 1-40s range - see the memory
-  pressure note in section 4) and a couple of minor response-quality
-  quirks (e.g. the assistant asking an unnecessary clarifying question
-  about a book section when the patron had only asked about hours, and
-  under-confirming a clearly-named title). Session isolation itself
-  worked correctly in this test (no history leaked between tabs), but the
-  combination of CPU-only inference and low available system RAM under
-  concurrent load is a real constraint worth being upfront about, both
-  for latency and for occasional response coherence.
-- **No real backend transactions:** holds, renewals, and fines are only
-  *simulated* in conversation — nothing is written to a real library
-  system.
-- **CORS wide open (`*`):** fine for local grading/demo, not
-  production-safe as-is.
+- **No persistence:** sessions are in-process memory; restarting uvicorn
+  wipes history. No database.
+- **Ollama concurrency:** FastAPI handles many WebSockets; the local
+  model typically generates one reply at a time, so concurrent patrons
+  queue.
+- **Sliding window, not summarization:** after 6 turn-pairs, older
+  context is dropped.
+- **1.5B reasoning limits:** persistent jailbreaks or ambiguous wording
+  can still cause drift or hallucination. Mitigated by a fixed knowledge
+  base and explicit “do not invent catalogue data” rules, not eliminated.
+- **Simulated transactions:** holds, renewals, and fines are
+  conversational only — nothing is written to a real ILS.
+- **CORS `*`:** acceptable for local grading, not production.
+- **8 GB RAM:** this laptop is tight; keep the 1.5B model for the demo.
 
 ---
 
-## 7. Bonus (optional)
+## 7. Bonus (optional — one item)
 
-- [ ] Cloud deployment (Vercel/other free-tier host) — URL: *fill in if done*
-- [ ] UX/persona polish beyond Phase V — library-themed visual design (bookshelf header,
-      favicon, warm color palette), responsive layout, and iterative
-      prompt-hardening for persona consistency under adversarial testing
-      (see docs/example_dialogues.md for jailbreak resistance testing).
+**Chosen: UX / persona polish** (not cloud deployment).
+
+Beyond a minimal chat box, the UI is a Riverbend desk: shelf greens,
+paper background, streaming caret, per-reply TTFT, auto-reconnect, a
+visible session id, and an on-load greeting that stays in character.
+The system prompt uses library-specific few-shot refusals so the
+persona holds under off-topic and “ignore your instructions” prompts
+(see Dialogues 3–4 and the Phase VI checklist).
+
+Cloud URL: not deployed (local CPU + Ollama cannot sit on a free
+static host by itself).
 
 ---
 
@@ -373,15 +303,16 @@ python benchmark.py --model qwen2.5:3b --runs 5
 ```
 library-assistant/
 ├── backend/
-│   ├── main.py                 # FastAPI app: REST + WebSocket
-│   ├── conversation_manager.py # session state + sliding-window memory
-│   ├── llm_engine.py           # streaming client for local Ollama model
-│   ├── prompts.py              # system prompt, domain knowledge & policies
-│   ├── benchmark.py            # latency benchmark script
+│   ├── main.py                 # FastAPI: REST + WebSocket
+│   ├── conversation_manager.py # sessions + sliding-window memory
+│   ├── llm_engine.py           # streaming client for local Ollama
+│   ├── prompts.py              # knowledge base, policies, stages
+│   ├── benchmark.py            # TTFT / tok/s measurement
+│   ├── failure_tests.py        # malformed / empty WebSocket checks
 │   └── requirements.txt
 ├── frontend/
 │   └── index.html              # chat UI (HTML/CSS/vanilla JS)
 ├── docs/
-│   └── example_dialogues.md    # example transcripts + manual test checklist
+│   └── example_dialogues.md    # transcripts + Phase VI checklist
 └── README.md
 ```
